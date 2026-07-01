@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./venv/bin/pip install *)",
+      "Bash(./venv/bin/pip freeze *)",
+      "Bash(./venv/bin/python -c ' *)",
+      "Bash(./venv/bin/python app.py)",
+      "Bash(curl -s -X POST http://127.0.0.1:5000/provenance/content/submit -H \"Content-Type: application/json\" -d '{\"text\": \"This is a test. This is a test too. This is also a test. This is one more test.\", \"creator_id\": \"user-1\"}')",
+      "Bash(curl -s -X POST http://127.0.0.1:5000/provenance/content/submit -H \"Content-Type: application/json\" -d '{\"text\": \"Wow! I cannot believe what happened. Short one. But then this much longer sentence rambled on for quite a while.\", \"creator_id\": \"user-2\"}')",
+      "Read(//tmp/**)",
+      "Bash(rm -f /tmp/flask_log3.txt)",
+      "Bash(lsof -i :5000 -sTCP:LISTEN)",
+      "Bash(curl -sv -X POST http://localhost:5000/provenance/content/submit -H \"Content-Type: application/json\" -d '{\"text\":\"test test test test test.\",\"creator_id\":\"u1\"}')",
+      "Bash(curl -s -X POST http://127.0.0.1:5000/provenance/content/submit -H \"Content-Type: application/json\" -d '{\"text\":\"The sun dipped below the horizon, painting the sky in hues of amber and rose. I sat on the porch, coffee in hand, watching the neighborhood slowly go quiet.\",\"creator_id\":\"test-user-1\"}')",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s -X POST http://127.0.0.1:5000/provenance/content/submit -H \"Content-Type: application/json\" -d '{\"text\": \"The sun dipped below the horizon, painting the sky in hues of amber and rose. I sat on the porch, coffee in hand, watching the neighborhood slowly go quiet.\", \"creator_id\": \"test-user-1\"}')",
+      "Bash(curl -s -X POST http://127.0.0.1:5000/provenance/content/submit -H \"Content-Type: application/json\" -d '{\"text\": \"Roses are red. Violets are blue. Sugar is sweet. And so are you.\", \"creator_id\": \"user-a\"}')",
+      "Bash(curl -s -X POST http://127.0.0.1:5000/provenance/content/submit -H \"Content-Type: application/json\" -d '{\"text\": \"Honestly I just spent way too long staring at this one paragraph trying to figure out if it sounded natural, which is kind of funny given what this app does.\", \"creator_id\": \"user-b\"}')",
+      "Bash(curl -s -X POST http://127.0.0.1:5000/provenance/content/submit -H \"Content-Type: application/json\" -d '{\"text\": \"It is important to note that this represents a comprehensive overview. It is important to note that the methodology is robust. It is important to note that results are significant.\", \"creator_id\": \"user-c\"}')",
+      "Bash(curl -s http://127.0.0.1:5000/log)",
+      "Bash(curl -s -X POST http://127.0.0.1:5000/provenance/content/submit -H \"Content-Type: application/json\" -d '{\"text\":\"test test test test test.\",\"creator_id\":\"u1\"}')",
+      "Bash(pkill -f \"venv/bin/python app.py\")",
+      "Bash(kill -9 40378 41567)",
+      "Read(//private/tmp/**)",
+      "Bash(python3 -c ' *)",
+      "Bash(pkill -9 -f \"venv/bin/python app.py\")",
+      "Bash(awk 'NR>1{print $2}')",
+      "Bash(xargs -r kill -9)",
+      "Bash(awk 'NR>1 && $1==\"Python\"{print $2}')",
+      "Bash(curl -s -X POST http://127.0.0.1:5000/provenance/content/submit -H 'Content-Type: application/json' -d '{\"text\": \"It is important to note that this approach offers significant advantages for modern teams across the organization.\", \"creator_id\": \"test-user\"}')",
+      "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' http://127.0.0.1:5000/log -o /dev/null)",
+      "Bash(curl -s -o /dev/null -w '%{http_code}\\\\n' -X POST http://127.0.0.1:5000/provenance/content/submit -H 'Content-Type: application/json' -d '{\"text\": \"This is a test submission for rate limit testing purposes only.\", \"creator_id\": \"ratelimit-test\"}')",
+      "Bash(python3 -m pip --version)",
+      "Bash(pip3 list *)",
+      "Bash(./venv/bin/pip list *)",
+      "Bash(./venv/bin/python -c \"import app; print\\('app import ok:', [str\\(r\\) for r in app.app.url_map.iter_rules\\(\\)]\\)\")"
+    ]
+  }
+}
