@@ -229,4 +229,12 @@ def build_ui():
 
 
 if __name__ == "__main__":
-    build_ui().launch()
+    # Explicit host/port so the URL is predictable, inbrowser so it opens
+    # itself, show_error so any handler failure surfaces in the UI instead of
+    # a silent blank page, and queue() for the event system.
+    build_ui().queue().launch(
+        server_name="127.0.0.1",
+        server_port=7860,
+        inbrowser=True,
+        show_error=True,
+    )

@@ -15,7 +15,51 @@ python gradio_app.py                     # interactive UI on :7860
 
 Both front-ends import the shared pipeline in `service.py`, so a verdict is identical whichever you use.
 
+## Walkthrough
+
+A recorded video walkthrough of the running system — submitting text and image-metadata content, earning the verified-human credential, filing an appeal, and reading the analytics dashboard — is in the project repository: [Morenayd/ai201-project4-provenance-guard](https://github.com/Morenayd/ai201-project4-provenance-guard).
+
 ## Architecture overview
+
+```mermaid
+flowchart TD
+    subgraph Clients
+        UI["Gradio UI<br/>(gradio_app.py)"]
+        API["Flask HTTP API<br/>(app.py)"]
+    end
+
+    UI --> SVC
+    API --> SVC
+
+    SVC["Shared pipeline<br/>(service.py)"]
+
+    SVC --> Route{"Request type?"}
+
+    %% Submission / analysis path
+    Route -->|submit / analyze| Modality{"content_type?"}
+    Modality -->|text| TextSig["Signals 1-3:<br/>LLM · stylometric · structural repetition"]
+    Modality -->|image_metadata| MetaSig["metadata_provenance<br/>+ caption via LLM & stylometric"]
+    TextSig --> Ensemble["Ensemble combine<br/>combine_weighted + tally_votes<br/>(scoring.py)"]
+    MetaSig --> Ensemble
+    Ensemble --> Label["Map to attr_result + label<br/>(score_to_attribution)"]
+    Label --> Badge["Stamp provenance badge<br/>(verified-human?)"]
+    Badge --> Persist
+
+    %% Verification path
+    Route -->|verify creator| Verify["verify_creator:<br/>attestation + human writing sample"]
+    Verify --> Cert["Issue signed HMAC credential<br/>(certificates.py)"]
+    Cert --> Persist
+
+    %% Appeal path
+    Route -->|appeal| Appeal["submit_appeal:<br/>owner check → status under_review"]
+    Appeal --> Persist
+
+    Persist["Persist + audit<br/>(content_store · creator_store ·<br/>appeals · audit_log)"]
+    Persist --> Analytics["Aggregate on demand<br/>(analytics.py → GET /analytics)"]
+    Persist --> Log["GET /log audit trail"]
+```
+
+
 
 **Submission path** (`POST /provenance/content/submit`, body: `creator_id`, plus `text` or `content_type: "image_metadata"` + `metadata`):
 
@@ -40,7 +84,18 @@ Both front-ends import the shared pipeline in `service.py`, so a verdict is iden
 
 `GET /log` serves the full audit trail (both event types), with an `appealed` flag computed live against current content status rather than baked into old entries.
 
-No storage is backed by a real database yet. Everything lives in in-memory stores (`content_store.py`, `appeals.py`, `audit_log.py`), mirrored to `audit.log` on disk. Covered in Known Limitations.
+No storage is backed by a real database yet. Everything lives in in-memory stores (`content_store.py`, `appeals.py`, `audit_log.py`, `creator_store.py`), mirrored to `audit.log` on disk. Covered in Known Limitations.
+
+### Endpoints
+
+| Method & path | Purpose | Added |
+|---|---|---|
+| `POST /provenance/content/submit` | Analyze text or image metadata, return label + vote + badge | rate-limited; extended in Project 4 |
+| `POST /provenance/creator/verify` | Earn the verified-human credential | Project 4 |
+| `POST /provenance/creator/certificate/verify` | Validate a presented provenance certificate | Project 4 |
+| `POST /provenance/content/appeal` | Contest a classification (owner only) | original |
+| `GET /analytics` | Detection patterns, appeal rate, signal-agreement rate | Project 4 |
+| `GET /log` | Full structured audit trail | original |
 
 ## Detection signals
 
@@ -108,14 +163,13 @@ Five variants, matching the five threshold bands exactly. Not collapsed to three
 
 Why five, not three: "likely" and "highly likely" are different claims, not different confidence levels of the same claim. "Highly likely AI" means mostly AI-written. "Likely AI" means predominantly AI-written, possibly lightly edited by a human (symmetric for the human side). Collapsing them loses information the score expresses.
 
-All five verified reachable at their exact boundaries (0.0, 0.34, 0.35, 0.44, 0.45, 0.55, 0.56, 0.70, 0.71, 1.0) directly against `score_to_attribution()`.
-
 ## Rate limiting
 
 `POST /provenance/content/submit` is rate-limited per IP address with [Flask-Limiter](https://flask-limiter.readthedocs.io/), two limits enforced together:
 
 - **3 requests per minute**: burst cap.
 - **10 requests per hour**: sustained-usage cap.
+- **100 requests per day**
 
 **Reasoning for these numbers:**
 
@@ -155,7 +209,7 @@ The first 3 succeed. Everything after is blocked for the rest of the minute. Con
 
 ## Audit logging
 
-Every submission and appeal writes a structured event: in memory (served by `GET /log`) and as JSON Lines to `audit.log` on disk. Survives restarts. Each entry captures a timestamp (`created_at`), `content_id`, attribution result, combined confidence score, both individual signal scores, and whether an appeal has been filed (`appealed`, computed live so it stays accurate for entries written before an appeal existed).
+Every submission and appeal is logged ( `GET /log`) as JSON to `audit.log`. Each entry captures a timestamp (`created_at`), `content_id`, attribution result, combined confidence score, both individual signal scores, and whether an appeal has been filed.
 
 Example, 3 entries from a real run (submit content A, submit content B, appeal content B):
 
